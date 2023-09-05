@@ -131,4 +131,4 @@ def parse(filename):
                     # print(decrypt(f, data))
 
 
-parse('E:\\L3D11Engine\\x64\\Debug\\LEngineD.lib')
+parse('LEngineD.lib')

@@ -19,7 +19,7 @@
         "ArchiveMemberHeader": "header/archive_member.json",
         "_LongFormat": {
             "FileHeader": "header/file.json",
-            "SectionHeaders[FileHeader.NumberOfSections]": "header/section.py"
+            "SectionHeaders[FileHeader.NumberOfSections]": "header/section.json"
         },
         "_ShortFormat": {
             "ImportHeader": "header/file.json"

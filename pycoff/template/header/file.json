@@ -1,0 +1,18 @@
+{
+    "Machine": "*u2",
+    "NumberOfSections": "*u2",
+    "TimeDateStamp": "*u4",
+    "PointerToSymbolTable": "*u4",
+    "NumberOfSymbols": "*u4",
+    "SizeOfOptionalHeader": "*u2",
+    "Characteristics": "*u2",
+
+    ">PointerToSymbolTable": "0x",
+
+    "?Machine": {
+        "0x0": "IMAGE_FILE_MACHINE_UNKNOWN",
+        "0x8664": "IMAGE_FILE_MACHINE_AMD64"
+    },
+    "?TimeDateStamp": "timestamp"
+
+}

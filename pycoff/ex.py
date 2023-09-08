@@ -4,23 +4,40 @@ import json
 import runpy
 import datetime
 from utility import read
-from tk import show
 
 
-def read_json(path):
-    with open(path, 'r') as f:
-        return json.load(f)
+def upper_hex(num):
+    return '0x' + hex(num)[2:].upper()
 
 
 def read_py(f, path):
+    if not os.path.exists(path):
+        return False
     py_data = runpy.run_path(path)
-    if "MAGIC" in py_data:
-        magic = f.read(len(py_data["MAGIC"]))
-        if magic != py_data["MAGIC"]:
-            return False, None
+    if not check_magic(f, py_data):
+        return False
+    return py_data
 
-    json_data = read_json(path.replace('.py', '.json'))
+
+def read_file(f, path, check=False):
+    py_path = path.replace('.json', '.py')
+    py_data = read_py(f, py_path)
+    if check and not py_data:
+        return False, None
+
+    with open(path, 'r') as jf:
+        json_data = json.load(jf)
+
     return json_data, py_data
+
+
+def check_magic(f, py_data):
+    if "MAGIC" not in py_data:
+        return True
+    magic_data = py_data["MAGIC"]
+    if type(magic_data) is bytes:
+        return magic_data == f.read(len(magic_data))
+    return magic_data(f)
 
 
 def get_value(raw, tab):
@@ -28,107 +45,147 @@ def get_value(raw, tab):
     key = obj.group(1)
     values = obj.group(2).split('.')
     for value in values:
-        tab = tab[value]
-    num = int(tab)
+        tab = tab._data[value]
+    num = int(tab._data)
     return key, num
 
 
-def get_display(value, desc):
-    if desc == "0x":
-        return hex(value)
+def get_obj(raw_key, tab):
+    key = raw_key[1:]
+    return tab[key]
 
 
-def get_desc(value, desc):
-    res = []
-    if desc == 'timestamp':
-        return datetime.datetime.fromtimestamp(value) if value > 0 else 'FFFFFFFF'
-    elif type(desc) is dict:
-        keys = sorted(desc, reverse=True)
-        for k in keys:
-            num = eval(k) if type(k) is str else k
-            if value > num and value & num:
-                res.append(desc[k])
-                value -= num
-        return res
+class Node:
+    def __init__(self, file=None, json_data=None, py_data=None, key='', data=None, from_py=False, num=None):
+        self._addr = ''
+        self._desc = ''
+        self._display = ''
+        self._key = key
+        self._data = data if data else {}
 
+        if file:
+            self._addr = upper_hex(file.tell())
 
-def get_py(f, key, json_data, py_data):
-    if callable(py_data[key]):
-        return py_data[key](f, json_data, py_data)
+        if num:
+            self._data = [Node(file, json_data, py_data, key, from_py=from_py) for i in range(num)]
+        elif from_py:
+            self.decrypt_from_py(file, self._key, json_data, py_data)
+        else:
+            self.decrypt(file, json_data, py_data)
 
+    def __getitem__(self, i):
+        return self._data[i]
 
-PREFIX = {
-    '?': lambda f, key, dst, json_data, py_data: get_display(dst[key], json_data[key]),
-    '>': lambda f, key, dst, json_data, py_data: get_desc(dst[key], json_data[key]),
-    '$': lambda f, key, dst, json_data, py_data: get_py(f, py_data[key])
-}
+    def __setitem__(self, i, node):
+        if type(node) is not Node:
+            node = Node(data=node)
+        self._data[i] = node
 
+    def __lt__(self, other):
+        return self._data < other
 
-def prefix(key):
-    for k, func in PREFIX.items():
-        if key.startswith(k):
-            return key[1:], func
-    return key, lambda f, key, dst, json_data, py_data: decrypt(f, (json_data[key], py_data))
+    def __gt__(self, other):
+        return self._data > other
 
+    def __eq__(self, other):
+        return self._data == other
 
-def decrypt(f, json_data, py_data):
-    if type(json_data) is str:
-        if json_data.endswith('.py'):
-            sub_json, sub_py = read_py(f, os.path.join(os.path.dirname(__file__), 'template', json_data))
-            return decrypt(f, sub_json, sub_py)
-        elif json_data.endswith('.json'):
-            data = read_json(os.path.join(os.path.dirname(__file__), 'template', json_data))
-            return decrypt(f, data, None)
-        return read(f, json_data)
-    elif type(json_data) is dict:
-        res = {}
+    def __int__(self):
+        return self._data
+
+    def decrypt(self, f, json_data, py_data):
+        if json_data is None:
+            return
+        if type(json_data) is str:
+            self.decrypt_str(f, json_data, py_data)
+        if type(json_data) is dict:
+            self.decrypt_dict(f, json_data, py_data)
+
+    def desc(self, json_data):
+        if json_data == 'timestamp':
+            self._desc = datetime.datetime.fromtimestamp(self._data) if self._data > 0 else 'FFFFFFFF'
+        elif type(json_data) is dict:
+            self._desc = []
+            desc = {eval(k) if type(k) is str else k: v for k, v in json_data.items()}
+            keys = sorted(desc, reverse=True)
+            value = self._data
+            for k in keys:
+                if value >= k and value & k:
+                    self._desc.append(desc[k])
+                    value -= k
+
+    def display(self, json_data):
+        if json_data == "0x":
+            self._display = upper_hex(self._data)
+
+    def prefix(self, key: str, json_data, tab):
+        if key.startswith('?'):
+            value = get_obj(key, tab)
+            value.desc(json_data)
+        elif key.startswith('>'):
+            value = get_obj(key, tab)
+            value.display(json_data)
+
+    def decrypt_from_py(self, f, key, json_data, py_data):
+        if callable(py_data[key]):
+            py_data[key](self, f, json_data, py_data)
+
+    def decrypt_json(self, f, json_data, py_data):
+        path = os.path.join(os.path.dirname(__file__), 'template', json_data)
+        sub_json, sub_py = read_file(f, path)
+
+        if sub_py and '__init__' in sub_py:
+            sub_py['__init__'](self, f, sub_json, sub_py)
+        else:
+            self.decrypt(f, sub_json, sub_py)
+
+    def decrypt_str(self, f, json_data: str, py_data):
+        if json_data.endswith('.json'):
+            self.decrypt_json(f, json_data, py_data)
+        else:
+            self._data = read(f, json_data)
+
+    def decrypt_dict(self, f, json_data: dict, py_data):
         for k, v in json_data.items():
-            if k.startswith('-'):
+            self.prefix(k, v, self._data)
+
+            from_py = False
+            num = None
+
+            if k.startswith('$'):
+                from_py = True
+                k = k[1:]
+
+            if k.startswith('-') or k.startswith('?') or k.startswith('>'):
                 continue
 
-            key = k
-            addr = hex(f.tell())
+            if k.endswith(']'):
+                k, num = get_value(k, self)
 
-            if type(v) is str and v.startswith('@'):
-                value = v[1:]
-                v = res if value == '' else res[value]
+            self._data[k] = Node(f, v, py_data, k, from_py=from_py, num=num)
 
-            if k.startswith('?'):
-                key = key[1:]
-                if key in res:
-                    res[k] = get_desc(res[key], v)
-            elif k.startswith('>'):
-                key = key[1:]
-                if key in res:
-                    res[k] = get_display(res[key], v)
-            elif k.startswith('$'):
-                key = key[1:]
-                if key.endswith(']'):
-                    key, num = get_value(key, res)
-                    res[key] = [get_py(f, key, v, py_data) for i in range(num)]
-                else:
-                    res[key] = get_py(f, key, v, py_data)
-            else:
-                if key.endswith(']'):
-                    key, num = get_value(key, res)
-                    res[key] = [decrypt(f, v, py_data) for i in range(num)]
-                else:
-                    res[key] = decrypt(f, v, py_data)
-            res['#' + key] = addr
-        return res
+    def get(self):
+        if self._display != '':
+            return self._display
+        if type(self._data) is int:
+            return upper_hex(self._data)
+        return self._data
+
+    def to_data(self):
+        data = self.get()
+        if type(data) is dict:
+            return {k: v.to_data() for k, v in data.items()}
+        else:
+            return data
 
 
 def parse(filename):
     with open(filename, 'rb') as f:
         for root, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), 'template')):
             for file in files:
-                if not file.endswith('py') or root.endswith('header'):
+                if not file.endswith('json') or root.endswith('header'):
                     continue
                 f.seek(0)
-                json_data, py_data = read_py(f, os.path.join(root, file))
+                json_data, py_data = read_file(f, os.path.join(root, file), True)
                 if json_data:
-                    show(filename, decrypt(f, json_data, py_data))
-                    # print(decrypt(f, data))
-
-
-parse('LEngineD.lib')
+                    return Node(f, json_data, py_data)

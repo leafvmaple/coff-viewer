@@ -71,7 +71,7 @@ def gui(file_path):
     show(obj)
 
 
-# parse('E:\\L3D11Engine\\x64\\Debug\\LLoaderD.lib')
-print(parser('E:\\L3D11Engine\\x64\\Debug\\LEngineD.lib').tojson())
+print(parser('E:\\L3D11Engine\\x64\\Debug\\LLoaderD.dll').tojson())
+# print(parser('E:\\L3D11Engine\\Engine\\x64\\Debug\\FilePath.obj').tojson())
 
 # gui('E:\\L3D11Engine\\x64\\Debug\\LLoaderD.lib')

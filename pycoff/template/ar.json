@@ -17,12 +17,12 @@
     "_PAD2": "*\n0",
     "$ObjectFiles[SecondLinker.NumberOfMembers]": {
         "ArchiveMemberHeader": "header/archive_member.json",
-        "_LongFormat": {
+        "-LongFormat": {
             "FileHeader": "header/file.json",
             "SectionHeaders[FileHeader.NumberOfSections]": "header/section.json"
         },
-        "_ShortFormat": {
-            "ImportHeader": "header/file.json"
+        "-ShortFormat": {
+            "ImportHeader": "header/import.json"
         }
     }
 }

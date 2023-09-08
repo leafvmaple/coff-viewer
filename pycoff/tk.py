@@ -1,47 +1,44 @@
 from tkinter import Tk, Label
 from tkinter.ttk import Treeview
+
+from ex import parse, Node
 # import sv_ttk
 
 
-def get_dest(key, tab):
-    if key not in tab:
-        return ''
-    value = tab[key]
-    if type(value) is list:
-        return ' | ' .join(value)
-    return value
+def display(tree, parent, k, v, desc, addr, intent):
+    intent = '    ' * intent
+    if type(desc) is list and len(desc) > 0:
+        tv = tree.insert(parent, 'end', text=k, values=(v, desc[0], intent + addr))
+        for i in range(1, len(desc)):
+            tree.insert(tv, 'end', text='', values=('', desc[i], ''))
+    else:
+        tv = tree.insert(parent, 'end', text=k, values=(v, desc, intent + addr))
+    return tv
 
 
-def show_tree(data, tree: Treeview, parent=None):
+def show_node(node: Node, tree: Treeview, parent=None, intent=0):
+    data = node.get()
     if type(data) is dict:
         for k, v in data.items():
-            if k.startswith('_') or k.startswith('>') or k.startswith('#') or k.startswith('?'):
+            if k.startswith('_'):
                 continue
-            if '>' + k in data:
-                v = data['>' + k]
-            addr = data['#' + k] if '#' + k in data else ''
-            desc = data['?' + k] if '?' + k in data else ''
-            if type(v) is str or type(v) is int:
-                if type(desc) is list and len(desc) > 0:
-                    tv = tree.insert(parent, 'end', text=k, values=(v, desc[0], addr))
-                    for i in range(1, len(desc)):
-                        tree.insert(tv, 'end', text='', values=('', desc[i], addr))
-                else:
-                    tree.insert(parent, 'end', text=k, values=(v, desc, addr))
-
+            value = v.get()
+            if type(value) is str or type(value) is int:
+                display(tree, parent, k, value, v._desc, v._addr, intent)
             else:
-                tv = tree.insert(parent, 'end', text=k, values=('', desc, addr))
-                show_tree(v, tree, tv)
+                tv = display(tree, parent, k, '', v._desc, v._addr, intent)
+                show_node(v, tree, tv, intent + 1)
     elif type(data) is list:
         for i, k in enumerate(data):
-            if type(k) is str:
-                tree.insert(parent, 'end', values=(k))
+            value = k.get()
+            if type(value) is str:
+                display(tree, parent, '', value, k._desc, k._addr, intent)
             else:
-                tv = tree.insert(parent, 'end', text="[%d]" % i)
-                show_tree(k, tree, tv)
+                tv = display(tree, parent, "[%d]" % i, '', k._desc, k._addr, intent)
+                show_node(k, tree, tv, intent + 1)
 
 
-def show(path, data):
+def show_path(path):
     window = Tk()
     window.title(path)
 
@@ -52,9 +49,12 @@ def show(path, data):
 
     # decrypt(obj)
 
-    tv = Treeview(window, columns=['key', 'value'], height=600)
+    tv = Treeview(window, columns=['key', 'desc', 'address'], height=600)
 
-    show_tree(data, tv, '')
+    # show_tree(data, tv, '')
+
+    node = parse(path)
+    show_node(node, tv, '')
 
     tv.pack(fill='both', expand=False)
 
@@ -64,3 +64,6 @@ def show(path, data):
     window.geometry("1200x800")
     window.config(bg="black")
     window.mainloop()
+
+
+show_path('LEngineD.lib')

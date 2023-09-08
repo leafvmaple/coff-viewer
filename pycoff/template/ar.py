@@ -1,43 +1,34 @@
 from utility import read
-from ex import decrypt
-
+from ex import Node
 
 MAGIC = b"!<arch>\n"
 
 
-def ObjectFiles(file, json_data, py_data):
-    header = decrypt(file, json_data["ArchiveMemberHeader"], py_data)
+def ObjectFiles(node: Node, file, json_data, py_data):
+    node.decrypt(file, json_data, py_data)
 
     machine = read(file, "*u2")
     file.seek(file.tell() - 2)
-    res = {
-        "ArchiveMemberHeader": header,
-        "#ArchiveMemberHeader": file.tell()
-    }
     tell = file.tell()
     if machine != 0:
-        res.update(decrypt(file, json_data["_LongFormat"], py_data))
+        node.decrypt(file, json_data["-LongFormat"], py_data)
 
-        for section in res['SectionHeaders']:
-            file.seek(tell + section['PointerToRawData'])
-            section['RawData'] = file.read(section['SizeOfRawData'])
+        for section in node['SectionHeaders']:
+            file.seek(tell + int(section['PointerToRawData']))
+            section['RawData'] = file.read(int(section['SizeOfRawData']))
 
             if section['NumberOfRelocations'] > 0:
-                file.seek(tell + section['PointerToRelocations'])
-                section['Relocations'] = [decrypt(file, "header/relocation.json", py_data) for i in range(section['NumberOfRelocations'])]
+                file.seek(tell + int(section['PointerToRelocations']))
+                section['Relocations'] = [Node(file, "header/relocation.json", py_data) for i in range(int(section['NumberOfRelocations']))]
 
     else:
-        res.update(decrypt(file, json_data["_ShortFormat"], py_data))
+        node.decrypt(file, json_data["-ShortFormat"], py_data)
 
-    file.seek(tell + res['ArchiveMemberHeader']['Size'])
+    file.seek(tell + int(node['ArchiveMemberHeader']['Size']))
 
     while file.read(1) == b'\n':
         pass
     file.seek(file.tell() - 1)
-
-    # print(hex(file.tell()))
-
-    return res
 
 
 def SectionHeaders(file, json_data, py_data):

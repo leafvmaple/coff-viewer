@@ -2,6 +2,7 @@ from utility import read
 from ex import Node
 
 MAGIC = b"!<arch>\n"
+EXT = [".lib"]
 
 
 def ObjectFiles(node: Node, file, json_data, py_data):

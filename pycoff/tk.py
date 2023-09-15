@@ -1,5 +1,7 @@
-from tkinter import Tk, Label
-from tkinter.ttk import Treeview
+import os
+
+from tkinter import Tk, filedialog, Menu
+from tkinter.ttk import Treeview, Notebook
 
 from ex import parse, Node
 # import sv_ttk
@@ -38,32 +40,38 @@ def show_node(node: Node, tree: Treeview, parent=None, intent=0):
                 show_node(k, tree, tv, intent + 1)
 
 
-def show_path(path):
+def open_file(nb: Notebook):
+    tv = Treeview(nb, columns=['key', 'desc', 'address'], height=800, show='tree')
+
+    file = filedialog.askopenfile(mode="rb", filetypes=[('Object File', '.obj .lib .dll')])
+    node = parse(file=file)
+
+    show_node(node, tv, '')
+    nb.add(tv, text=os.path.basename(file.name))
+
+
+if __name__ == "__main__":
     window = Tk()
-    window.title(path)
+    window.title("COFF VIEWER")
 
     window.tk.call("source", "azure.tcl")
     window.tk.call("set_theme", "dark")
 
+    window.geometry("1200x800")
     # sv_ttk.set_theme("dark")
 
-    # decrypt(obj)
+    nb = Notebook(window, height=800)
+    # nb.pack(fill='both', expand=False)
 
-    tv = Treeview(window, columns=['key', 'desc', 'address'], height=600)
-
-    # show_tree(data, tv, '')
-
-    node = parse(path)
-    show_node(node, tv, '')
-
-    tv.pack(fill='both', expand=False)
+    menubar = Menu(window)
+    file_menu = Menu(menubar)
+    menubar.add_cascade(label='File', menu=file_menu)
+    file_menu.add_command(label='Open', command=lambda: open_file(nb))
 
     # label = Label(root)
     # label.grid()
 
-    window.geometry("1200x800")
-    window.config(bg="black")
+    nb.pack(fill='both', expand=False)
+
+    window.config(menu=menubar, bg="black")
     window.mainloop()
-
-
-show_path('LEngineD.lib')

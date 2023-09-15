@@ -6,14 +6,20 @@ import datetime
 from utility import read
 
 
-def upper_hex(num):
-    return '0x' + hex(num)[2:].upper()
+def upper_hex(num, prefix=False):
+    hex_str = hex(num)[2:].upper()
+    if prefix:
+        while len(hex_str) < 4:
+            hex_str = '0' + hex_str
+    return '0x' + hex_str
 
 
 def read_py(f, path):
     if not os.path.exists(path):
         return False
     py_data = runpy.run_path(path)
+    if not check_ext(f, py_data):
+        return False
     if not check_magic(f, py_data):
         return False
     return py_data
@@ -40,6 +46,15 @@ def check_magic(f, py_data):
     return magic_data(f)
 
 
+def check_ext(f, py_data):
+    if "EXT" not in py_data:
+        return True
+    ext = os.path.splitext(f.name)[1]
+    if ext in py_data["EXT"]:
+        return True
+    return False
+
+
 def get_value(raw, tab):
     obj = re.search(r'(\S+)\[(\S+)*\]', raw)
     key = obj.group(1)
@@ -64,7 +79,7 @@ class Node:
         self._data = data if data else {}
 
         if file:
-            self._addr = upper_hex(file.tell())
+            self._addr = upper_hex(file.tell(), True)
 
         if num:
             self._data = [Node(file, json_data, py_data, key, from_py=from_py) for i in range(num)]
@@ -179,13 +194,15 @@ class Node:
             return data
 
 
-def parse(filename):
-    with open(filename, 'rb') as f:
-        for root, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), 'template')):
-            for file in files:
-                if not file.endswith('json') or root.endswith('header'):
-                    continue
-                f.seek(0)
-                json_data, py_data = read_file(f, os.path.join(root, file), True)
-                if json_data:
-                    return Node(f, json_data, py_data)
+def parse(filename=None, file=None):
+    if file is None:
+        file = open(filename, 'rb')
+
+    for root, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), 'template')):
+        for json_name in files:
+            if not json_name.endswith('json') or root.endswith('header'):
+                continue
+            file.seek(0)
+            json_data, py_data = read_file(file, os.path.join(root, json_name), True)
+            if json_data:
+                return Node(file, json_data, py_data)

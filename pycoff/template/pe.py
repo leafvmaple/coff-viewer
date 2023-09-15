@@ -3,6 +3,8 @@ import sys
 _MZ   = b'MZ'
 _PE   = b'PE\0\0'
 
+LIB = [".dll"]
+
 
 def MAGIC(file):
     if _MZ != file.read(len(_MZ)):

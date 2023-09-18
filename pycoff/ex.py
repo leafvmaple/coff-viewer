@@ -7,11 +7,7 @@ from utility import read
 
 
 def upper_hex(num, prefix=False):
-    hex_str = hex(num)[2:].upper()
-    if prefix:
-        while len(hex_str) < 4:
-            hex_str = '0' + hex_str
-    return '0x' + hex_str
+    return "0x%04X" % num
 
 
 def read_py(f, path):

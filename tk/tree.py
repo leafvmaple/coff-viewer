@@ -1,10 +1,6 @@
-import os
+from tkinter.ttk import Treeview
 
-from tkinter import Tk, filedialog, Menu
-from tkinter.ttk import Treeview, Notebook
-
-from ex import parse, Node
-# import sv_ttk
+import pycoff
 
 
 def display(tree, parent, k, v, desc, addr, intent):
@@ -18,7 +14,7 @@ def display(tree, parent, k, v, desc, addr, intent):
     return tv
 
 
-def show_node(node: Node, tree: Treeview, parent=None, intent=0):
+def show_node(node, tree: Treeview, parent=None, intent=0):
     data = node.get()
     if type(data) is dict:
         for k, v in data.items():
@@ -40,38 +36,9 @@ def show_node(node: Node, tree: Treeview, parent=None, intent=0):
                 show_node(k, tree, tv, intent + 1)
 
 
-def open_file(nb: Notebook):
-    tv = Treeview(nb, columns=['key', 'desc', 'address'], height=800, show='tree')
-
-    file = filedialog.askopenfile(mode="rb", filetypes=[('Object File', '.obj .lib .dll')])
-    node = parse(file=file)
-
-    show_node(node, tv, '')
-    nb.add(tv, text=os.path.basename(file.name))
-
-
-if __name__ == "__main__":
-    window = Tk()
-    window.title("COFF VIEWER")
-
-    window.tk.call("source", "azure.tcl")
-    window.tk.call("set_theme", "dark")
-
-    window.geometry("1200x800")
-    # sv_ttk.set_theme("dark")
-
-    nb = Notebook(window, height=800)
-    # nb.pack(fill='both', expand=False)
-
-    menubar = Menu(window)
-    file_menu = Menu(menubar)
-    menubar.add_cascade(label='File', menu=file_menu)
-    file_menu.add_command(label='Open', command=lambda: open_file(nb))
-
-    # label = Label(root)
-    # label.grid()
-
-    nb.pack(fill='both', expand=False)
-
-    window.config(menu=menubar, bg="black")
-    window.mainloop()
+class Tree(Treeview):
+    def __init__(self, file, *args, **kwargs):
+        # super(Treeview, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        node = pycoff.parser(file=file)
+        show_node(node, self, '')

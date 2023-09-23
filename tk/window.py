@@ -4,6 +4,7 @@ from tkinter import Tk, filedialog, Menu
 from tkinter.ttk import Notebook
 
 from tk.tree import Tree
+from tk.property import Property
 
 
 class Window(Tk):
@@ -14,10 +15,14 @@ class Window(Tk):
         self.tk.call("source", "azure.tcl")
         self.tk.call("set_theme", "dark")
 
-        self.geometry("1200x800")
+        self.geometry("1400x800")
         # sv_ttk.set_theme("dark")
-        self.nb = Notebook(self, height=800)
-        self.nb.pack(side='top', fill='both', expand=False)
+        self.nb = Notebook(self, height=800, width=1000)
+        self.nb.pack(side='left', fill='y', expand=True)
+
+        self.property = Property(self, width=400, height=800)
+        self.property.update(b'abcdefg')
+        self.property.pack(side='right', fill='both', expand=False)
 
         menubar = Menu(self)
         file_menu = Menu(menubar)
@@ -30,5 +35,5 @@ class Window(Tk):
         file = filedialog.askopenfile(mode="rb", filetypes=[('Object File', '.obj .lib .dll')])
         if not file:
             return
-        tree = Tree(file, self.nb, columns=['key', 'desc', 'address'], height=800, show='tree')
+        tree = Tree(file, self.nb, columns=['key', 'desc', 'address'], show='tree')
         self.nb.add(tree, text=os.path.basename(file.name))

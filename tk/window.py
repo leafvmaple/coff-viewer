@@ -36,7 +36,9 @@ class Window(Tk):
         self.property.update(event.data)
 
     def _menu_open(self):
-        file = filedialog.askopenfile(mode="rb", filetypes=[('Object File', '.obj .lib .dll')])
+        file = filedialog.askopenfile(mode="rb", filetypes=[
+            ('Object File', '.obj .lib .dll .o'),
+        ])
         if not file:
             return
         tree = Tree(file, self.nb, columns=['key', 'desc', 'address'], show='tree')

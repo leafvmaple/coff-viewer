@@ -55,4 +55,3 @@ class Tree(Treeview):
         focus = event.widget.focus()
         data = self._raw_dict[focus]
         self.event_generate('<<PropertyUpdate>>', data=data)
-

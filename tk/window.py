@@ -12,7 +12,6 @@ from .utils import bind_event_data
 class Window(Tk):
     def __init__(self):
         super().__init__()
-        # self.title("COFF VIEWER")
 
         self.tk.call("source", "azure.tcl")
         self.tk.call("set_theme", "dark")
@@ -43,6 +42,5 @@ class Window(Tk):
             return
         tree = Tree(file, self.nb, columns=['key', 'desc', 'address'], show='tree')
         bind_event_data(tree, '<<PropertyUpdate>>', self._bytes_update)
-        # tree.bind('<<PropertyUpdate>>', self._bytes_update)
 
         self.nb.add(tree, text=os.path.basename(file.name))

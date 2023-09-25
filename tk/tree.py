@@ -6,12 +6,11 @@ def display(tree: Treeview, parent, k, v, node, intent):
     intent = '    ' * intent
     desc = node._desc
     addr = node._addr
-    if type(desc) is list and len(desc) > 0:
-        tv = tree.insert(parent, 'end', text=k, values=(v, desc[0], intent + addr))
-        for i in range(1, len(desc)):
-            tree.insert(tv, 'end', text='', values=('', desc[i], ''))
-    else:
-        tv = tree.insert(parent, 'end', text=k, values=(v, desc, intent + addr))
+
+    if type(desc) is list:
+        desc = " | ".join(desc)
+    tv = tree.insert(parent, 'end', text=k, values=(v, desc, intent + addr))
+
     # tv._data = node._raw
     tree._raw_dict[tv] = (node._begin, node.to_hex(), node.to_display())
     return tv

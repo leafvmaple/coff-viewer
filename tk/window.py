@@ -40,7 +40,7 @@ class Window(Tk):
         ])
         if not file:
             return
-        tree = Tree(file, self.nb, columns=['key', 'desc', 'address'], show='tree')
+        tree = Tree(file, self.nb, columns=['key', 'desc', 'address'], show='tree headings')
         bind_event_data(tree, '<<PropertyUpdate>>', self._bytes_update)
 
         self.nb.add(tree, text=os.path.basename(file.name))

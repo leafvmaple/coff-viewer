@@ -1,4 +1,4 @@
-from tkinter import Frame, CENTER, NO
+from tkinter import Frame, CENTER, W, NO
 from tkinter.ttk import Treeview
 import math
 
@@ -6,23 +6,29 @@ COLUMN_COUNT = 8
 
 
 class Property(Frame):
+    COLUMN_TITLE = [
+        ('Address', 80, CENTER),
+        ('1', 25, CENTER),
+        ('2', 25, CENTER),
+        ('3', 25, CENTER),
+        ('4', 25, CENTER),
+        ('5', 25, CENTER),
+        ('6', 25, CENTER),
+        ('7', 25, CENTER),
+        ('8', 25, CENTER),
+        ('', 30, CENTER),
+        ('', 80, W)
+    ]
+
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
         columns = [''] * (COLUMN_COUNT * 2 + 2)
 
         self.tv = Treeview(self, columns=columns, show='headings')
-        self.tv.column(0, anchor=CENTER, stretch=NO, width=80)
-        self.tv.heading(0, text='Address')
-        for i in range(COLUMN_COUNT):
-            self.tv.column(i + 1, anchor=CENTER, stretch=NO, width=25)
-            self.tv.heading(i + 1, text=i % COLUMN_COUNT)
-
-        self.tv.column(COLUMN_COUNT + 1, anchor=CENTER, stretch=NO, width=30)
-        self.tv.heading(COLUMN_COUNT + 1, text='')
-
-        for i in range(COLUMN_COUNT):
-            self.tv.column(i + COLUMN_COUNT + 2, anchor=CENTER, stretch=NO, width=18)
+        for i, v in enumerate(self.COLUMN_TITLE):
+            self.tv.column(i, anchor=v[2], stretch=NO, width=v[1])
+            self.tv.heading(i, text=v[0])
 
         self.tv.pack(side='top', fill='both', expand=True)
 
@@ -43,4 +49,4 @@ class Property(Frame):
             begin = i * COLUMN_COUNT
             end = (i + 1) * COLUMN_COUNT
             addr = ['%08X' % (offset + begin)]
-            self.tv.insert('', 'end', text='', values=addr + hex[begin: end] + [''] + display[begin: min(end, count)])
+            self.tv.insert('', 'end', text='', values=addr + hex[begin: end] + [''] + [''.join(display[begin: min(end, count)])])

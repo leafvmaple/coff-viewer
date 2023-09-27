@@ -16,12 +16,12 @@ class Window(Tk):
         self.tk.call("source", "azure.tcl")
         self.tk.call("set_theme", "dark")
 
-        self.geometry("1500x800")
+        self.geometry("1600x800")
         # sv_ttk.set_theme("dark")
-        self.nb = Notebook(self, height=800, width=1000)
+        self.nb = Notebook(self, height=800, width=1150)
         self.nb.pack(side='left', fill='y', expand=True)
 
-        self.property = Property(self, width=600, height=800)
+        self.property = Property(self, width=450, height=800)
         self.property.pack(side='right', fill='both', expand=False)
 
         menubar = Menu(self)

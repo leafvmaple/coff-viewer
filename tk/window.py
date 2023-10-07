@@ -37,6 +37,7 @@ class Window(Tk):
     def _menu_open(self):
         file = filedialog.askopenfile(mode="rb", filetypes=[
             ('Object File', '.obj .lib .dll .o'),
+            ('Debug File', '.pdb'),
         ])
         if not file:
             return

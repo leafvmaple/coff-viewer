@@ -4,7 +4,7 @@ import pydumpbin
 
 def display(tree: Treeview, parent, k, v, node, intent):
     intent = '    ' * intent
-    desc = node._desc
+    desc = node.desc()
     addr = node._addr
 
     if type(desc) is list:

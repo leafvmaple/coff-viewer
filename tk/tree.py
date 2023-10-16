@@ -19,7 +19,9 @@ def display(tree: Treeview, parent, k, v, node, intent):
 def show_node(node, tree: Treeview, parent=None, intent=0):
     data = node.get()
     if type(data) is dict:
-        for k, v in data.items():
+        items = data.items()
+        items = sorted(items, key=lambda x: x[1]._begin)
+        for k, v in items:
             if k.startswith('_'):
                 continue
             value = v.get()
